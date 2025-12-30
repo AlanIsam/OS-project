@@ -27,7 +27,6 @@ class ReadyQueue:
 
 class RoundRobinScheduler:
     def __init__(self, processes, quantum, context_switch=1.0):
-        # Processes MUST be sorted by arrival time
         self.processes = sorted(processes, key=lambda p: p.arrival_time)
         self.quantum = quantum
         self.context_switch = context_switch
@@ -36,13 +35,10 @@ class RoundRobinScheduler:
         self.time = 0.0
         self.completed = []
 
-        self.process_index = 0  # tracks which processes have arrived
+        self.process_index = 0
 
     def _enqueue_arrivals(self):
-        """
-        Move all processes that have arrived by current time
-        into the ready queue.
-        """
+
         while (
             self.process_index < len(self.processes) and
             self.processes[self.process_index].arrival_time <= self.time
@@ -56,7 +52,6 @@ class RoundRobinScheduler:
             self.process_index < len(self.processes)
         ):
 
-            # If CPU idle, jump to next arrival
             if self.ready_queue.is_empty():
                 self.time = self.processes[self.process_index].arrival_time
                 self._enqueue_arrivals()
@@ -70,7 +65,6 @@ class RoundRobinScheduler:
             self.time += run_time
             current.remaining_time -= run_time
 
-            # Handle arrivals during execution
             self._enqueue_arrivals()
 
             if current.remaining_time == 0:
@@ -79,7 +73,6 @@ class RoundRobinScheduler:
             else:
                 self.ready_queue.enqueue(current)
 
-            # Context switch if more work remains
             if (
                 not self.ready_queue.is_empty() or
                 self.process_index < len(self.processes)
